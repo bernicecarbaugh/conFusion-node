@@ -10,6 +10,24 @@ var dishRouter = require("./routes/dishRouter");
 var leaderRouter = require("./routes/leaderRouter");
 var promoRouter = require("./routes/promoRouter");
 
+const mongoose = require("mongoose");
+const Dishes = require("./models/dishes");
+const url = "mongodb://localhost:27017/conFusion";
+const connect = mongoose.connect(url);
+
+connect.then(
+  db => {
+    console.log("connected to mongo db server ");
+    // console.log("Dishes length: " + Dishes.length);
+    // Dishes.find({}).then(dishes => {
+    //   console.log("Here are the dishes: " + dishes);
+    // });
+  },
+  err => {
+    console.log("couldn't connect to server" + err);
+  }
+);
+
 var app = express();
 
 // view engine setup
