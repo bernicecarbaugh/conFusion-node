@@ -1,6 +1,5 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const mongoose = require("mongoose");
 const Dishes = require("../models/dishes");
 
 const dishRouter = express.Router();
@@ -175,7 +174,6 @@ dishRouter
           if (dish != null) {
             // no easy way to delete all comments in an array
             // have to remove each subdocument one by one
-            console.log("dish comments.length " + dish.comments.length);
             for (let i = dish.comments.length - 1; i >= 0; i--) {
               dish.comments.id(dish.comments[i]._id).remove();
             }

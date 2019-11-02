@@ -2,28 +2,13 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 require("mongoose-currency").loadType(mongoose);
 const Currency = mongoose.Types.Currency;
-
-const commentSchema = new Schema(
-  {
-    rating: {
-      type: Number,
-      min: 1,
-      max: 5,
-      required: true
-    },
-    comment: {
-      type: String,
-      required: false
-    },
-    author: {
-      type: String,
-      required: true
-    }
-  },
-  { timestamps: true }
-);
-
-const dishSchema = new Schema(
+// "name": "Weekend Grand Buffet",
+// "image": "images/buffet.png",
+// "label": "New",
+// "price": "19.99",
+// "description": "Featuring . . .",
+// "featured": false
+const promotionSchema = new Schema(
   {
     name: {
       type: String,
@@ -38,10 +23,6 @@ const dishSchema = new Schema(
       type: String,
       required: false
     },
-    category: {
-      type: String,
-      default: "entrees"
-    },
     label: {
       type: String,
       required: false
@@ -54,14 +35,12 @@ const dishSchema = new Schema(
     featured: {
       type: Boolean,
       default: false
-    },
-    // dish document can have multiple comment documents as subdocuments
-    comments: [commentSchema]
+    }
   },
   {
     timestamps: true
   }
 );
 
-var Dishes = mongoose.model("TestDishModel", dishSchema);
-module.exports = Dishes;
+var Promotions = mongoose.model("Promotion", promotionSchema);
+module.exports = Promotions;
