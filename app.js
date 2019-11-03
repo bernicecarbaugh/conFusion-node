@@ -40,39 +40,56 @@ app.set("view engine", "jade");
 app.use(logger("dev"));
 app.use(express.json()); // grabs json object from client side
 app.use(express.urlencoded({ extended: false })); // grabs the data if it's a string or array
-app.use(cookieParser());
+app.use(cookieParser("12345-67889-09876-54321")); // dummy secret key
 
 // authorize before getting any resources from server
+// get info from cookies first; if not avaialble, then ask the user otherwise just try to authenticate
 function auth(req, res, next) {
-  console.log("req.headers" + req.headers);
-  var authHeader = req.headers.authorization;
-  console.log("authHeader" + req.headers);
-  if (!authHeader) {
-    var err = new Error("You must provide basic authentication info.");
-    res.setHeader("WWW-Authenticate", "Basic");
-    err.status = 401;
-    next(err); // skip everything until error handler;
-    return;
-  }
+  console.log(req.signedCookies);
 
-  // array containing 2 elements: username and password, extracted from authHeader in base64 encoding
-  var auth = new Buffer(authHeader.split(" ")[1], "base64")
-    .toString()
-    .split(":");
-  var username = auth[0];
-  console.log("username" + username);
-  var password = auth[1];
-  console.log("password" + password);
+  if (!req.signedCookies.user) {
+    var authHeader = req.headers.authorization;
 
-  if (username === "admin" && password === "password")
-    // if authenticated, auth will pass the request to the next middleware
-    next();
-  else {
-    var err = new Error("Incorrect user name or password.");
-    res.setHeader("WWW-Authenticate", "Basic");
-    err.status = 401;
-    next(err); // skip everything below until error handler;
-    return;
+    if (!authHeader) {
+      var err = new Error("You must provide basic authentication info.");
+
+      res.setHeader("WWW-Authenticate", "Basic");
+      err.status = 401;
+      next(err); // skip everything until error handler;
+      return;
+    }
+
+    // array containing 2 elements: username and password, extracted from authHeader in base64 encoding
+    var auth = new Buffer.from(authHeader.split(" ")[1], "base64")
+      .toString()
+      .split(":");
+    var username = auth[0];
+    console.log("username" + username);
+    var password = auth[1];
+    console.log("password" + password);
+
+    if (username === "admin" && password === "password") {
+      // if authenticated, set up cookied
+      // then auth will pass the request to the next middleware
+      res.cookie("user", "admin", { signed: true });
+      next();
+    } else {
+      var err = new Error("Incorrect user name or password.");
+      res.setHeader("WWW-Authenticate", "Basic");
+      err.status = 401;
+      next(err); // skip everything below until error handler;
+      return;
+    }
+  } else {
+    // cookie exists
+    if (req.signedCookies.user === "admin") {
+      next();
+    } else {
+      var err = new Error("You are not authenticated.");
+      err.status = 401;
+      next(err);
+      return;
+    }
   }
 }
 
