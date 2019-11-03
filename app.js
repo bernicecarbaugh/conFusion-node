@@ -1,17 +1,19 @@
+// importing middlewares
 var createError = require("http-errors");
 var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 
+// importing routers
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 var dishRouter = require("./routes/dishRouter");
 var leaderRouter = require("./routes/leaderRouter");
 var promoRouter = require("./routes/promoRouter");
 
+// database
 const mongoose = require("mongoose");
-const Dishes = require("./models/dishes");
 const url = "mongodb://localhost:27017/conFusion";
 const connect = mongoose.connect(url);
 
@@ -34,15 +36,55 @@ var app = express();
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "jade");
 
+// using middleware
 app.use(logger("dev"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json()); // grabs json object from client side
+app.use(express.urlencoded({ extended: false })); // grabs the data if it's a string or array
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, "public")));
 
+// authorize before getting any resources from server
+function auth(req, res, next) {
+  console.log("req.headers" + req.headers);
+  var authHeader = req.headers.authorization;
+  console.log("authHeader" + req.headers);
+  if (!authHeader) {
+    var err = new Error("You must provide basic authentication info.");
+    res.setHeader("WWW-Authenticate", "Basic");
+    err.status = 401;
+    next(err); // skip everything until error handler;
+    return;
+  }
+
+  // array containing 2 elements: username and password, extracted from authHeader in base64 encoding
+  var auth = new Buffer(authHeader.split(" ")[1], "base64")
+    .toString()
+    .split(":");
+  var username = auth[0];
+  console.log("username" + username);
+  var password = auth[1];
+  console.log("password" + password);
+
+  if (username === "admin" && password === "password")
+    // if authenticated, auth will pass the request to the next middleware
+    next();
+  else {
+    var err = new Error("Incorrect user name or password.");
+    res.setHeader("WWW-Authenticate", "Basic");
+    err.status = 401;
+    next(err); // skip everything below until error handler;
+    return;
+  }
+}
+
+app.use(auth);
+
+// serve static data from server
+app.use(express.static(path.join(__dirname, "public"))); // routes the static pages (index, about, etc)
+
+// URLS
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
-app.use("/dishes", dishRouter);
+app.use("/dishes", dishRouter); // when http request calls the dishes url endpoint, use dishRouter which was declared / imported earlier
 app.use("/leaders", leaderRouter);
 app.use("/promotions", promoRouter);
 app.use("/promos", promoRouter);
