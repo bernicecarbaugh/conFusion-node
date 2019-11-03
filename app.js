@@ -9,7 +9,7 @@ var logger = require("morgan");
 
 // importing routers
 var indexRouter = require("./routes/index");
-var usersRouter = require("./routes/users");
+var userRouter = require("./routes/userRouter");
 var dishRouter = require("./routes/dishRouter");
 var leaderRouter = require("./routes/leaderRouter");
 var promoRouter = require("./routes/promoRouter");
@@ -56,6 +56,10 @@ app.use(
   })
 );
 
+app.use("/", indexRouter);
+app.use("/users", userRouter);
+app.use("/user", userRouter);
+
 // authorize before getting any resources from server
 // get info from cookies first; if not avaialble, then ask the user otherwise just try to authenticate
 function auth(req, res, next) {
@@ -63,47 +67,16 @@ function auth(req, res, next) {
 
   //  if (!req.signedCookies.user) {
   if (!req.session.user) {
-    var authHeader = req.headers.authorization;
-
-    if (!authHeader) {
-      var err = new Error("You must provide basic authentication info.");
-
-      res.setHeader("WWW-Authenticate", "Basic");
-      err.status = 401;
-      next(err); // skip everything until error handler;
-      return;
-    }
-
-    // array containing 2 elements: username and password, extracted from authHeader in base64 encoding
-    var auth = new Buffer.from(authHeader.split(" ")[1], "base64")
-      .toString()
-      .split(":");
-    var username = auth[0];
-    console.log("username" + username);
-    var password = auth[1];
-    console.log("password" + password);
-
-    if (username === "admin" && password === "password") {
-      // if authenticated, set up cookies
-      // then auth will pass the request to the next middleware
-      //res.cookie("user", "admin", { signed: true });
-      req.session.user = "admin";
-      next();
-    } else {
-      var err = new Error("Incorrect user name or password.");
-      res.setHeader("WWW-Authenticate", "Basic");
-      err.status = 401;
-      next(err); // skip everything below until error handler;
-      return;
-    }
+    var err = new Error("You are not authenticated.");
+    err.status = 401;
+    next(err);
+    return;
   } else {
-    // cookie exists
-    // if (req.signedCookies.user === "admin") {
-    if (req.session.user === "admin") {
+    if (req.session.user === "authenticated") {
       next();
     } else {
-      var err = new Error("You are not authenticated.");
-      err.status = 401;
+      var err = new Error("User is not authenticated.");
+      err.status = 403;
       next(err);
       return;
     }
@@ -116,8 +89,6 @@ app.use(auth);
 app.use(express.static(path.join(__dirname, "public"))); // routes the static pages (index, about, etc)
 
 // URLS
-app.use("/", indexRouter);
-app.use("/users", usersRouter);
 app.use("/dishes", dishRouter); // when http request calls the dishes url endpoint, use dishRouter which was declared / imported earlier
 app.use("/leaders", leaderRouter);
 app.use("/promotions", promoRouter);
