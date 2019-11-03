@@ -2,7 +2,9 @@
 var createError = require("http-errors");
 var express = require("express");
 var path = require("path");
-var cookieParser = require("cookie-parser");
+// var cookieParser = require("cookie-parser");
+var session = require("express-session");
+var FileStore = require("session-file-store")(session);
 var logger = require("morgan");
 
 // importing routers
@@ -18,7 +20,7 @@ const url = "mongodb://localhost:27017/conFusion";
 const connect = mongoose.connect(url);
 
 connect.then(
-  db => {
+  () => {
     console.log("connected to mongo db server ");
     // console.log("Dishes length: " + Dishes.length);
     // Dishes.find({}).then(dishes => {
@@ -40,14 +42,27 @@ app.set("view engine", "jade");
 app.use(logger("dev"));
 app.use(express.json()); // grabs json object from client side
 app.use(express.urlencoded({ extended: false })); // grabs the data if it's a string or array
-app.use(cookieParser("12345-67889-09876-54321")); // dummy secret key
+
+//app.use(cookieParser("12345-67889-09876-54321")); // dummy secret key
+
+// use session instead of cookie for auth
+app.use(
+  session({
+    name: "session-id",
+    secret: "12345-67889-09876-54321",
+    saveUninitialized: false,
+    resave: false,
+    store: new FileStore() // stores the session info in the sessions folder
+  })
+);
 
 // authorize before getting any resources from server
 // get info from cookies first; if not avaialble, then ask the user otherwise just try to authenticate
 function auth(req, res, next) {
-  console.log(req.signedCookies);
+  console.log("Request session: " + JSON.stringify(req.session));
 
-  if (!req.signedCookies.user) {
+  //  if (!req.signedCookies.user) {
+  if (!req.session.user) {
     var authHeader = req.headers.authorization;
 
     if (!authHeader) {
@@ -69,9 +84,10 @@ function auth(req, res, next) {
     console.log("password" + password);
 
     if (username === "admin" && password === "password") {
-      // if authenticated, set up cookied
+      // if authenticated, set up cookies
       // then auth will pass the request to the next middleware
-      res.cookie("user", "admin", { signed: true });
+      //res.cookie("user", "admin", { signed: true });
+      req.session.user = "admin";
       next();
     } else {
       var err = new Error("Incorrect user name or password.");
@@ -82,7 +98,8 @@ function auth(req, res, next) {
     }
   } else {
     // cookie exists
-    if (req.signedCookies.user === "admin") {
+    // if (req.signedCookies.user === "admin") {
+    if (req.session.user === "admin") {
       next();
     } else {
       var err = new Error("You are not authenticated.");
