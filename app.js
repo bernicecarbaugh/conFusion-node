@@ -3,9 +3,11 @@ var createError = require("http-errors");
 var express = require("express");
 var path = require("path");
 // var cookieParser = require("cookie-parser");
+var logger = require("morgan");
 var session = require("express-session");
 var FileStore = require("session-file-store")(session);
-var logger = require("morgan");
+var passport = require("passport");
+var authenticate = require("./authenticate");
 
 // importing routers
 var indexRouter = require("./routes/index");
@@ -56,29 +58,24 @@ app.use(
   })
 );
 
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use("/", indexRouter);
 app.use("/users", userRouter);
 app.use("/user", userRouter);
 
 // authorize before getting any resources from server
-// get info from cookies first; if not avaialble, then ask the user otherwise just try to authenticate
 function auth(req, res, next) {
-  console.log("Request session: " + JSON.stringify(req.session));
-
-  //  if (!req.signedCookies.user) {
-  if (!req.session.user) {
+  if (!req.user) {
     var err = new Error("You are not authenticated.");
     err.status = 401;
-    next(err);
-    return;
+    return next(err);
   } else {
     if (req.session.user === "authenticated") {
       next();
     } else {
-      var err = new Error("User is not authenticated.");
-      err.status = 403;
-      next(err);
-      return;
+      next();
     }
   }
 }
