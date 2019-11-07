@@ -7,10 +7,11 @@ var logger = require("morgan");
 var session = require("express-session");
 var FileStore = require("session-file-store")(session);
 var passport = require("passport");
-var authenticate = require("./authenticate");
+// var authenticate = require("./authenticate");
+var config = require("./config");
 
 // importing routers
-var indexRouter = require("./routes/index");
+var indexRouter = require("./routes/indexRouter");
 var userRouter = require("./routes/userRouter");
 var dishRouter = require("./routes/dishRouter");
 var leaderRouter = require("./routes/leaderRouter");
@@ -18,7 +19,7 @@ var promoRouter = require("./routes/promoRouter");
 
 // database
 const mongoose = require("mongoose");
-const url = "mongodb://localhost:27017/conFusion";
+const url = config.mongoUrl;
 const connect = mongoose.connect(url);
 
 connect.then(
@@ -48,45 +49,49 @@ app.use(express.urlencoded({ extended: false })); // grabs the data if it's a st
 //app.use(cookieParser("12345-67889-09876-54321")); // dummy secret key
 
 // use session instead of cookie for auth
-app.use(
-  session({
-    name: "session-id",
-    secret: "12345-67889-09876-54321",
-    saveUninitialized: false,
-    resave: false,
-    store: new FileStore() // stores the session info in the sessions folder
-  })
-);
+// use jwt instead of session
+// app.use(
+//   session({
+//     name: "session-id",
+//     secret: "12345-67889-09876-54321",
+//     saveUninitialized: false,
+//     resave: false,
+//     store: new FileStore() // stores the session info in the sessions folder
+//   })
+// );
 
 app.use(passport.initialize());
-app.use(passport.session());
+// app.use(passport.session());
 
 app.use("/", indexRouter);
 app.use("/users", userRouter);
 app.use("/user", userRouter);
 
 // authorize before getting any resources from server
-function auth(req, res, next) {
-  if (!req.user) {
-    var err = new Error("You are not authenticated.");
-    err.status = 401;
-    return next(err);
-  } else {
-    if (req.session.user === "authenticated") {
-      next();
-    } else {
-      next();
-    }
-  }
-}
+// we used to call auth every time we want to pass a request but now using tokens
+// function auth(req, res, next) {
+//   if (!req.user) {
+//     var err = new Error("You are not authenticated.");
+//     err.status = 401;
+//     return next(err);
+//   } else {
+//     if (req.session.user === "authenticated") {
+//       next();
+//     } else {
+//       next();
+//     }
+//   }
+// }
 
-app.use(auth);
+// app.use(auth);
 
 // serve static data from server
+// anyone can access the public files without auth
 app.use(express.static(path.join(__dirname, "public"))); // routes the static pages (index, about, etc)
 
 // URLS
-app.use("/dishes", dishRouter); // when http request calls the dishes url endpoint, use dishRouter which was declared / imported earlier
+// when http request calls the dishes url endpoint, use dishRouter which was declared / imported earlier
+app.use("/dishes", dishRouter);
 app.use("/leaders", leaderRouter);
 app.use("/promotions", promoRouter);
 app.use("/promos", promoRouter);

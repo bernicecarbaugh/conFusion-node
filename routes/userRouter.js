@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 
 var User = require("../models/users");
 var passport = require("passport");
+var authenticate = require("../authenticate");
 
 var userRouter = express.Router();
 userRouter.use(bodyParser.json());
@@ -40,10 +41,13 @@ userRouter.post(
   // works like proomises; if authenticate is successul goes to next middleware
   passport.authenticate("local"),
   (req, res, next) => {
+    // can encode other user data but can look up in mongo with userid
+    var token = authenticate.getToken({ _id: req.user._id });
     res.statusCode = 200;
     res.setHeader("Content-Type", "application/json");
     res.json({
       success: true,
+      token: token, // pass token back
       status: "You are authenticated and logged in"
     });
   }
