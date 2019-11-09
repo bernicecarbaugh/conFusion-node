@@ -60,9 +60,11 @@ app.use(express.urlencoded({ extended: false })); // grabs the data if it's a st
 //   })
 // );
 
+console.log("passport initalize");
 app.use(passport.initialize());
 // app.use(passport.session());
 
+console.log("Routing");
 app.use("/", indexRouter);
 app.use("/users", userRouter);
 app.use("/user", userRouter);

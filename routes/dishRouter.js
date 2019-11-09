@@ -14,6 +14,7 @@ dishRouter
   .get((req, res, next) => {
     //res.end("will send all the dishes to you.");
     Dishes.find({})
+      .populate("comments.author")
       .then(
         dishes => {
           console.log("Sending all dishes to you");
@@ -71,6 +72,7 @@ dishRouter
   .get((req, res, next) => {
     //res.end("will send details of the dish id: " + req.params.dishId);
     Dishes.findById(req.params.dishId)
+      .populate("comments.author")
       .then(
         dish => {
           res.statusCode = 200;
@@ -129,6 +131,7 @@ dishRouter
   .route("/:dishId/comments")
   .get((req, res, next) => {
     Dishes.findById(req.params.dishId)
+      .populate("comments.author")
       .then(
         dish => {
           if (dish != null) {
@@ -150,12 +153,22 @@ dishRouter
       .then(
         dish => {
           if (dish != null) {
+            // JWT puts the user id in body req.user
+            // mongoose change - to get first and last name from user id
+            // we are not sending it from client but populated from server
+            req.body.author = req.user._id;
             dish.comments.push(req.body);
-            dish.save().then(dish => {
-              res.statusCode = 200;
-              res.setHeader("Content-Type", "application/json");
-              res.json(dish);
-            });
+            dish
+              .save()
+              // the instructions do not match the video for this part. video more complicated!
+              .then(
+                dish => {
+                  res.statusCode = 200;
+                  res.setHeader("Content-Type", "application/json");
+                  res.json(dish);
+                },
+                err => next(err)
+              );
           } else {
             err = new Error("Dish " + req.params.dishId + " not found.");
             err.statusCode = 404;
@@ -206,6 +219,7 @@ dishRouter
   .route("/:dishId/comments/:commentId")
   .get((req, res, next) => {
     Dishes.findById(req.params.dishId)
+      .populate("Comments.author")
       .then(
         dish => {
           if (dish != null && dish.comments.id(req.params.commentId) != null) {
@@ -250,9 +264,14 @@ dishRouter
             }
             dish.save().then(
               dish => {
-                res.statusCode = 200;
-                res.setHeader("Content-Type", "application/json");
-                res.json(dish);
+                // instructions do not match video again for this part
+                Dishes.findById(dish._id)
+                  .populate("comments.author")
+                  .then(dish => {
+                    res.statusCode = 200;
+                    res.setHeader("Content-Type", "application/json");
+                    res.json(dish);
+                  });
               },
               err => next(err)
             );
