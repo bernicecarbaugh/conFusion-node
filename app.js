@@ -4,8 +4,10 @@ var express = require("express");
 var path = require("path");
 // var cookieParser = require("cookie-parser");
 var logger = require("morgan");
-var session = require("express-session");
-var FileStore = require("session-file-store")(session);
+// var session = require("express-session");
+// var FileStore = require("session-file-store")(session);
+
+// passport is token based auth
 var passport = require("passport");
 // var authenticate = require("./authenticate");
 var config = require("./config");
@@ -61,7 +63,11 @@ app.use(express.urlencoded({ extended: false })); // grabs the data if it's a st
 // );
 
 console.log("passport initalize");
+// just says we're going to passport middleware so we don't have to parse or build our own username/password schema
+// passport can validate username / password if in database, or if not, then it can create
 app.use(passport.initialize());
+
+// session is not encoded so not good practice to use
 // app.use(passport.session());
 
 console.log("Routing");
