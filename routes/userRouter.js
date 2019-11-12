@@ -4,12 +4,15 @@ const bodyParser = require("body-parser");
 var User = require("../models/users");
 var passport = require("passport"); // passport contains many strategies; in this case, we are using passport local mongoose strategy
 var authenticate = require("../authenticate");
+var cors = require("./corsRouter");
 
 var userRouter = express.Router();
 userRouter.use(bodyParser.json());
 
 /* GET users listing. */
-userRouter.route("/").get(
+userRouter.get(
+  "/",
+  cors.corsWithOptions,
   authenticate.verifyUser, // have to call this first to get the req.user object which verify admin needs
   authenticate.verifyAdmin,
   (req, res, next) => {
@@ -28,7 +31,7 @@ userRouter.route("/").get(
 );
 
 /* POST users/signup. */
-userRouter.post("/signup", (req, res, next) => {
+userRouter.post("/signup", cors.corsWithOptions, (req, res, next) => {
   // register is a passport method to create a new user
   User.register(
     // 3 parameters - username, password and error handling callback function
@@ -76,6 +79,7 @@ userRouter.post("/signup", (req, res, next) => {
 
 userRouter.post(
   "/login",
+  cors.corsWithOptions,
   // works like promises; if authenticate is successul goes to next middleware
   // authenticate method lets you authenticate using a username and password
   passport.authenticate("local"),
