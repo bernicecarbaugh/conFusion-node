@@ -97,6 +97,24 @@ userRouter.post(
   }
 );
 
+userRouter.get(
+  "/facebook/token",
+  passport.authenticate("facebook-token"),
+  (req, res) => {
+    if (req.user) {
+      var token = authenticate.getToken({ _id: req.user._id });
+      // once you authenticate with facebook you can discard it because from here out we just rely on jwt
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "application/json");
+      res.json({
+        success: true,
+        token: token, // pass token back
+        status: "You are authenticated and logged in"
+      });
+    }
+  }
+);
+
 userRouter.get("/logout", (req, res, next) => {
   console.log(req);
   console.log(req.session);

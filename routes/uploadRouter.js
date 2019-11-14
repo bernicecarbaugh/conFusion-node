@@ -6,7 +6,7 @@ const cors = require("./corsRouter");
 
 var storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(new Error("Storage not found."), "../public/images"); // cb function parameters: error, destination folder
+    cb(null, "public/images"); // cb function parameters: error, destination folder
   },
   filename: (req, file, cb) => {
     cb(null, file.originalname); // filename for the file uploaded
@@ -38,9 +38,9 @@ uploadRouter
     res.end("GET operation not supported on /imageUpload");
   })
   .post(
-    cors.corsWithOptions,
-    authenticate.verifyUser,
-    authenticate.verifyAdmin,
+    //cors.corsWithOptions,
+    //authenticate.verifyUser,
+    //authenticate.verifyAdmin,
     upload.single("imageFile"), // this needs to be the key that is in the request body
     (req, res) => {
       res.statusCode = 200;
