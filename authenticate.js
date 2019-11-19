@@ -45,6 +45,10 @@ exports.jwtPassport = passport.use(
 
 exports.verifyUser = passport.authenticate("jwt", { session: false });
 
+// exports.verifyUser = (req, res, next) => {
+//   passport.authenticate("jwt", { session: false });
+// };
+
 exports.verifyAdmin = (req, res, next) => {
   if (req.user.admin) next();
   else {
@@ -55,9 +59,9 @@ exports.verifyAdmin = (req, res, next) => {
 };
 
 exports.verifyAuthor = (req, res, next) => {
-  // console.log("req.user._id " + req.user._id);
-  // console.log("req.params.dishId " + req.params.dishId);
-  // console.log("req.params.commentId " + req.params.commentId);
+  console.log("req.user._id " + req.user._id);
+  console.log("req.params.dishId " + req.params.dishId);
+  console.log("req.params.commentId " + req.params.commentId);
   const Dishes = require("./models/dishes");
   Dishes.findById(req.params.dishId)
     .then(

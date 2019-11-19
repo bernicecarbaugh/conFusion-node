@@ -19,7 +19,7 @@ dishRouter
   // all users can get
   .get(cors.cors, (req, res, next) => {
     //res.end("will send all the dishes to you.");
-    Dishes.find({})
+    Dishes.find(req.query)
       .populate("comments.author")
       .then(
         dishes => {
